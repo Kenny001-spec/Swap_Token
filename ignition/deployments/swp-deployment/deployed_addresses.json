@@ -1,5 +1,5 @@
 {
-  "SwapModule#NairaToken": "0x65c9e7b58FEF7DAC8ADC20CB6a74779Da329F890",
-  "SwapModule#UsdtToken": "0xEe4Df2B09167da0196D52cC7C44341cED0aD2965",
-  "SwapModule#SwapToken": "0x78BB816F488690a8B6F1fa2Cc5728b36b7E8C757"
+  "SwapTokenModule#BaseToken": "0x700D9CCA863E50C5EbdD682209a9c318902EA7ba",
+  "SwapTokenModule#UsdtToken": "0x40C0Cce1C095F5487a0d59C009d6761c96aff75a",
+  "SwapTokenModule#SwapToken": "0x18bB4E001a8e33E0784ec302A02834fbA3c3be9f"
 }

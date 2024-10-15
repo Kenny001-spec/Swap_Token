@@ -5,18 +5,18 @@ import {IERC20} from "./IERC20.sol";
 
 contract SwapToken {
 
-    IERC20 public nairaToken;
+    IERC20 public baseToken;
     IERC20 public usdtToken;
     address owner;
     bool internal locked;
-    uint256 internal constant ONE_USDT_TO_NAIRA = 1600;
+    uint256 internal constant ONE_USDT_TO_BASE = 2100;
 
-    enum Currency {NONE, NAIRA, USDT }
+    enum Currency {NONE, BASE, USDT }
 
     mapping (Currency => uint256)  contractBalances;
 
-    constructor(IERC20 _nairaTokenCAddr, IERC20 _usdtTokenCAddr){
-        nairaToken = _nairaTokenCAddr;
+    constructor(IERC20 _baseTokenCAddr, IERC20 _usdtTokenCAddr){
+        baseToken = _baseTokenCAddr;
         usdtToken = _usdtTokenCAddr;
         owner = msg.sender;
     }
@@ -38,28 +38,28 @@ contract SwapToken {
     }
 
 
-    function swapNairaToUsdt(address _from, uint256 _amount) external reentrancyGuard  {
+    function swapBaseToUsdt(address _from, uint256 _amount) external reentrancyGuard  {
         require(msg.sender != address(0), "Zero not allowed");
         require(_amount > 0 , "Cannot swap zero amount");
 
         uint256 standardAmount = _amount * 10**18;
 
-        uint256 userBal = nairaToken.balanceOf(msg.sender);
+        uint256 userBal = baseToken.balanceOf(msg.sender);
 
         require(userBal >= _amount, "Your balance is not enough");
 
-        uint256 allowance = nairaToken.allowance(msg.sender, address(this));
+        uint256 allowance = baseToken.allowance(msg.sender, address(this));
         require(allowance >= _amount, "Token allowance too low");
 
 
-        bool deducted = nairaToken.transferFrom(_from, address(this), standardAmount);
+        bool deducted = baseToken.transferFrom(_from, address(this), standardAmount);
 
         require(deducted, "Excution failed");
 
-        contractBalances[Currency.NAIRA] +=  standardAmount;
+        contractBalances[Currency.BASE] +=  standardAmount;
 
 
-        uint256 convertedValue_ = Naira_Usdt_Rate(standardAmount, Currency.NAIRA);
+        uint256 convertedValue_ = Base_Usdt_Rate(standardAmount, Currency.BASE);
 
         bool swapped = usdtToken.transfer(msg.sender, convertedValue_);
 
@@ -76,7 +76,7 @@ contract SwapToken {
 
 
 
-    function swapUsdtToNaira(address _from, uint256 _amount) external reentrancyGuard {
+    function swapUsdtToBase(address _from, uint256 _amount) external reentrancyGuard {
     require(msg.sender != address(0), "Zero not allowed");
     require(_amount > 0, "Cannot swap zero amount");
 
@@ -94,20 +94,20 @@ contract SwapToken {
 
     contractBalances[Currency.USDT] += standardAmount;
 
-    uint256 convertedValue_ = Naira_Usdt_Rate(standardAmount, Currency.USDT);
-    bool swapped = nairaToken.transfer(msg.sender, convertedValue_);
+    uint256 convertedValue_ = Base_Usdt_Rate(standardAmount, Currency.USDT);
+    bool swapped = baseToken.transfer(msg.sender, convertedValue_);
 
     if (swapped) {
-        contractBalances[Currency.NAIRA] += convertedValue_;
+        contractBalances[Currency.BASE] += convertedValue_;
         emit SwapSuccessful(_from, address(this), standardAmount);
     }
 }
 
 
 
-        function getContractBalance() external view onlyOwner returns (uint256 contractUsdtbal_, uint256 contractNairabal_) {
+        function getContractBalance() external view onlyOwner returns (uint256 contractUsdtbal_, uint256 contractBasel_) {
         contractUsdtbal_ = usdtToken.balanceOf(address(this));
-        contractNairabal_ = nairaToken.balanceOf(address(this));
+        contractBasel_ = baseToken.balanceOf(address(this));
     }
 
 
@@ -119,9 +119,9 @@ contract SwapToken {
         require(bal >= _amount, "Insufficient contract balance");
 
 
-        if(Currency.NAIRA == _currencyName) {
+        if(Currency.BASE == _currencyName) {
 
-         nairaToken.transfer(msg.sender, _amount);
+         baseToken.transfer(msg.sender, _amount);
 
          
         emit WithdrawSuccessful(msg.sender, _currencyName, _amount);
@@ -141,11 +141,11 @@ contract SwapToken {
 
 
 
- function Naira_Usdt_Rate (uint256 _amount, Currency _currency) internal pure returns (uint256 convertedValue_) {
+ function Base_Usdt_Rate (uint256 _amount, Currency _currency) internal pure returns (uint256 convertedValue_) {
         if(_currency == Currency.USDT) {
-            convertedValue_ = _amount * ONE_USDT_TO_NAIRA;  
-        } else if(_currency == Currency.NAIRA) {
-            convertedValue_ = _amount  / ONE_USDT_TO_NAIRA ;
+            convertedValue_ = _amount * ONE_USDT_TO_BASE;  
+        } else if(_currency == Currency.BASE) {
+            convertedValue_ = _amount  / ONE_USDT_TO_BASE ;
         } else {
             revert("Unsupported currency");
         }
